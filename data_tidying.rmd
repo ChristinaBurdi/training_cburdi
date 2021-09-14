@@ -67,14 +67,71 @@ catch_clean = catch_data %>%
 
 
 - reshape data
+We know that we are going to want the data in long format so this set will convert it from wide to long format
+
+```{r}
+catch_long = catch_clean %>% #this grabs the cleaned dataset with the updated variables and removed All column
+  pivot_longer(cols = -c(Region, Year), names_to = "species", values_to = "catch" )#first arg is the data which we piped in, second is the columns you want to pivot over. We used the -c code to say that you don't want the region or year to move to different columns in a long format
+#names_to is what you are going to turn the species column names into. Values_to is what you are naming the column where the values are inputted
+
+head(catch_long) #head may be a better way to look at it since it has the actual format with the long format, or you could just click on it on the right
+
+```
+```{r}
+#moving back to a wide format
+
+catch_wide = catch_long %>% 
+  pivot_wider(names_from = Region, values_from = catch)#this actual gives where each species was found and the amount per region
+
+head(catch_wide)
+```
 
 
+```{r}
+#can also rename columns, in this instance want to include the units since it is in thousands
+
+catch_long <- catch_long %>% 
+  rename(catch_thousands = catch)
 
 
+  mutate(catch = catch_thousands * 1000)
+```
+
+- group
+
+```{r}
+mean_region = catch_long %>% 
+  group_by(Region, Year) %>% 
+  summarise(catch_mean = mean(catch), num_obs = n())
+
+head(mean_region)
+```
 
 
+##Join to Region Definitions
+
+Using a left join--- want to always make sure that you have the same amount of rows in the left table as the new table. 
+The number of columns will be the number of columns in the left, right, minus what you're joining
 
 
+```{r}
+region_defs <- read.csv("https://knb.ecoinformatics.org/knb/d1/mn/v2/object/df35b.303.1") %>% 
+    select(code, mgmtArea)
+
+head(region_defs)
+```
+
+```{r}
+catch_joined = left_join(catch_long, region_defs) #this gives an error because the names for the columns are not the same between the two
+
+#can help this by using "by" in the code to specify what the column name in the left is and how to joins to the right
+
+catch_joined = left_join(catch_long, region_defs, by = c("Region" = "code"))
+
+#another option to join is by using the function merge, but the left or right join is more specific as to how it is joined
+
+head(catch_joined)
+```
 
 
 
