@@ -1,0 +1,85 @@
+---
+title: "data cleaning"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message=FALSE}
+#The message = false code tells r not to display the message it outputs in the r markdown doc
+library(dplyr)
+library(tidyr)
+```
+
+
+##Data Sources -- This hads headers
+
+Read in the data from the [KNB](https://knb.ecoinformatics.org/knb/d1/mn/v2/object/df35b.302.1)
+
+```{r}
+catch_original = read.csv("https://knb.ecoinformatics.org/knb/d1/mn/v2/object/df35b.302.1")
+
+#can put a link in for a download file into the read.csv code
+glimpse(catch_original)
+```
+
+
+
+##Clean and Reshape data
+
+
+- remove unnecessary columns
+
+```{r}
+catch_data = catch_original %>% #selecting the columns that we want to keep
+  #select(Region, Year, Chinook, Sockeye, Coho, Pink, Chum)
+  select(-All, -notesRegCode) #this code will instead remove the columns you don't want
+
+glimpse(catch_data)
+
+```
+
+- check column types
+
+```{r}
+catch_clean = catch_data %>% 
+  mutate(Chinook = as.integer(Chinook))#for some reason chinook read in as a character so this changes it to a number
+glimpse(catch_clean)
+```
+the above gave a warning that the conversion of chinook returned a NA for some things. Need to find where that happens so you can fix it 
+
+```{r}
+i <- which(is.na(catch_clean$Chinook))
+i #this tells you that the row that produces an NA value is row 401
+
+catch_original[i, ] #this shows you the data where NA pops up and it is b/c there is an I in year 1955 instead of a 1
+```
+
+```{r}
+catch_clean = catch_data %>% 
+  mutate(Chinook = if_else (Chinook == "I", "1", Chinook)) %>%  #first replace the I with the character 1, then need to change the 1 to integer
+  mutate(Chinook = as.integer(Chinook)) #could have actual used as.numeric too, but we stuck with the integer to be consistent with the rest of the values. difference is that as.numeric allows for decimals
+ 
+
+```
+
+
+- reshape data
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
